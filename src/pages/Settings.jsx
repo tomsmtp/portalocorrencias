@@ -1,646 +1,524 @@
-// import React, { useState, useEffect } from 'react';
-// import { supabase } from '../lib/supabase';
-// import { UserPlus, ShieldAlert, Trash2, Loader2, Users as UsersIcon, Settings as SettingsIcon } from 'lucide-react';
-
-// export function Settings({ user }) {
-//   const [users, setUsers] = useState([]);
-//   const [loading, setLoading] = useState(false);
-//   const [fetching, setFetching] = useState(true);
-  
-//   const [nome, setNome] = useState('');
-//   const [email, setEmail] = useState('');
-//   const [matricula, setMatricula] = useState('');
-//   const [nivel, setNivel] = useState('comum');
-
-//   const isAdmin = user?.nivel === 'admin';
-
-//   useEffect(() => {
-//     if (isAdmin) {
-//       buscarUsuarios();
-//     } else {
-//       setFetching(false);
-//     }
-//   }, [isAdmin]);
-
-//   async function buscarUsuarios() {
-//     setFetching(true);
-//     const { data } = await supabase.from('usuarios').select('*').order('nome');
-//     setUsers(data || []);
-//     setFetching(false);
-//   }
-
-//   const handleCreateUser = async (e) => {
-//     e.preventDefault();
-//     setLoading(true);
-    
-//     // Lógica de criação (Auth + Public Table)
-//     const { data: authData, error: authError } = await supabase.auth.signUp({
-//       email,
-//       password: matricula,
-//       options: { data: { nome, matricula } }
-//     });
-
-//     if (authError) {
-//       alert("Erro: " + authError.message);
-//     } else {
-//       await supabase.from('usuarios').insert([{
-//         id: authData.user.id,
-//         nome, email, matricula, nivel
-//       }]);
-//       alert("Usuário criado!");
-//       setNome(''); setEmail(''); setMatricula('');
-//       buscarUsuarios();
-//     }
-//     setLoading(false);
-//   };
-
-//   const handleDeleteUser = async (userId, userName) => {
-//     if (!window.confirm(`Tem certeza que deseja apagar o usuário ${userName}? Esta ação não pode ser desfeita.`)) {
-//       return;
-//     }
-
-//     setLoading(true);
-    
-//     // Deletar do banco de dados (usuarios)
-//     const { error: dbError } = await supabase
-//       .from('usuarios')
-//       .delete()
-//       .eq('id', userId);
-
-//     if (dbError) {
-//       alert("Erro ao deletar usuário: " + dbError.message);
-//     } else {
-//       // Deletar da autenticação
-//       const { error: authError } = await supabase.auth.admin.deleteUser(userId);
-      
-//       if (authError) {
-//         alert("Usuário deletado do banco mas houve erro na autenticação: " + authError.message);
-//       } else {
-//         alert("Usuário deletado com sucesso!");
-//         buscarUsuarios();
-//       }
-//     }
-    
-//     setLoading(false);
-//   };
-
-//   const handleChangeUserLevel = async (userId, novoNivel) => {
-//     if (!window.confirm(`Tem certeza que deseja alterar o nível de acesso para "${novoNivel.toUpperCase()}"?`)) {
-//       return;
-//     }
-
-//     setLoading(true);
-    
-//     const { error } = await supabase
-//       .from('usuarios')
-//       .update({ nivel: novoNivel })
-//       .eq('id', userId);
-
-//     if (error) {
-//       alert("Erro ao alterar nível: " + error.message);
-//     } else {
-//       alert("Nível de acesso alterado com sucesso!");
-//       buscarUsuarios();
-//     }
-    
-//     setLoading(false);
-//   };
-
-//   return (
-//     <div className="space-y-8 animate-in fade-in duration-500">
-//       <div>
-//         <h2 className="text-2xl font-bold text-slate-800">Configurações</h2>
-//         <p className="text-slate-500">Preferências da conta e gestão de acesso.</p>
-//       </div>
-
-//       {/* SEÇÃO 1: Preferências Gerais (Visível para TODOS) */}
-//       <section className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-//         <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-//           <SettingsIcon size={20} className="text-slate-400" /> Preferências de Exportação
-//         </h3>
-//         <div className="max-w-xs">
-//           <label className="block text-sm font-medium text-slate-600 mb-2">Formato padrão de relatório</label>
-//           <select 
-//             className="w-full p-2 border rounded-lg bg-slate-50"
-//             defaultValue={localStorage.getItem('agromanager_export_pref') || 'csv'}
-//             onChange={(e) => localStorage.setItem('agromanager_export_pref', e.target.value)}
-//           >
-//             <option value="csv">CSV (Excel Simples)</option>
-//             <option value="xlsx">Excel (.xlsx)</option>
-//             <option value="pdf">PDF (Relatório)</option>
-//           </select>
-//         </div>
-//       </section>
-
-//       {/* SEÇÃO 2: Gestão de Usuários (APENAS PARA ADMIN) */}
-//       {isAdmin ? (
-//         <div className="space-y-8">
-//           <section className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-//             <div className="flex items-center gap-2 mb-6 text-blue-600">
-//               <UserPlus size={22} />
-//               <h3 className="text-lg font-bold text-slate-800">Cadastrar Novo Colaborador</h3>
-//             </div>
-//             <form onSubmit={handleCreateUser} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-//               <input placeholder="Nome" required value={nome} onChange={e => setNome(e.target.value)} className="p-2 border rounded-lg bg-slate-50" />
-//               <input placeholder="E-mail" type="email" required value={email} onChange={e => setEmail(e.target.value)} className="p-2 border rounded-lg bg-slate-50" />
-//               <input placeholder="Matrícula" required value={matricula} onChange={e => setMatricula(e.target.value)} className="p-2 border rounded-lg bg-slate-50" />
-//               <div className="flex gap-2">
-//                 <select value={nivel} onChange={e => setNivel(e.target.value)} className="flex-1 p-2 border rounded-lg bg-slate-50">
-//                   <option value="comum">Comum</option>
-//                   <option value="admin">Admin</option>
-//                 </select>
-//                 <button type="submit" disabled={loading} className="bg-blue-600 text-white px-4 rounded-lg font-bold">
-//                   {loading ? '...' : 'SALVAR'}
-//                 </button>
-//               </div>
-//             </form>
-//           </section>
-
-//           <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-//             <div className="p-4 border-b bg-slate-50 font-bold text-slate-700 flex items-center gap-2">
-//               <UsersIcon size={18} /> Equipe Cadastrada
-//             </div>
-//             <table className="w-full text-left">
-//               <tbody className="divide-y divide-slate-100">
-//                 {users.map(u => (
-//                   <tr key={u.id} className="hover:bg-slate-50 transition-colors">
-//                     <td className="px-6 py-4 font-bold text-slate-700">{u.nome}</td>
-//                     <td className="px-6 py-4 text-sm text-slate-500">{u.email}</td>
-//                     <td className="px-6 py-4">
-//                       <select 
-//                         value={u.nivel}
-//                         onChange={(e) => handleChangeUserLevel(u.id, e.target.value)}
-//                         disabled={loading}
-//                         className={`px-3 py-1 rounded border font-bold text-[10px] uppercase cursor-pointer disabled:opacity-50 ${
-//                           u.nivel === 'admin' 
-//                             ? 'bg-red-50 border-red-200 text-red-600' 
-//                             : 'bg-blue-50 border-blue-200 text-blue-600'
-//                         }`}
-//                       >
-//                         <option value="comum">Comum</option>
-//                         <option value="admin">Admin</option>
-//                       </select>
-//                     </td>
-//                     <td className="px-6 py-4 text-right">
-//                       <button
-//                         onClick={() => handleDeleteUser(u.id, u.nome)}
-//                         disabled={loading}
-//                         className="flex items-center gap-1 px-3 py-1 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors font-bold text-sm disabled:opacity-50"
-//                       >
-//                         <Trash2 size={16} /> Deletar
-//                       </button>
-//                     </td>
-//                   </tr>
-//                 ))}
-//               </tbody>
-//             </table>
-//           </section>
-//         </div>
-//       ) : (
-//         /* MENSAGEM PARA USUÁRIO COMUM */
-//         <div className="p-6 bg-blue-50 border border-blue-100 rounded-xl flex items-center gap-4">
-//           <ShieldAlert className="text-blue-500" size={32} />
-//           <div>
-//             <h4 className="font-bold text-blue-900">Gestão de Usuários Restrita</h4>
-//             <p className="text-sm text-blue-700">Somente administradores podem gerenciar novos acessos.</p>
-//           </div>
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
-
-
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import { 
-  UserPlus, ShieldAlert, Trash2, Loader2, 
-  Users as UsersIcon, Settings as SettingsIcon, CheckCircle, AlertCircle 
-} from 'lucide-react';
+import { Users, Plus, Trash2, X, Edit2, AlertCircle } from 'lucide-react';
+import { useAlert } from '../context/AlertContext';
+import { getRoleLabel } from '../lib/roles.js';
 
 export function Settings({ user }) {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [fetching, setFetching] = useState(true);
-  
-  // Estados do formulário de cadastro
-  const [nome, setNome] = useState('');
-  const [email, setEmail] = useState('');
-  const [matricula, setMatricula] = useState('');
-  const [nivel, setNivel] = useState('comum');
+  const alert = useAlert();
+  const [usuarios, setUsuarios] = useState([]);
+  const [loadingUsuarios, setLoadingUsuarios] = useState(false);
+  const [showNewUserModal, setShowNewUserModal] = useState(false);
+  const [showEditUserModal, setShowEditUserModal] = useState(false);
+  const [editingUserId, setEditingUserId] = useState(null);
+  const [novoUsuario, setNovoUsuario] = useState({ nome: '', matricula: '', email: '', nivel: 'supervisor', senha: '' });
+  const [editarUsuario, setEditarUsuario] = useState({ nome: '', email: '', matricula: '', senha: '', nivel: 'supervisor' });
+  const [deletingId, setDeletingId] = useState(null);
+  const [usuarioDeletando, setUsuarioDeletando] = useState(null);
+  const isAdmin = user?.cargo === 'admin';
 
-  // Estados dos modais de confirmação
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteData, setDeleteData] = useState(null);
-  const [showLevelConfirm, setShowLevelConfirm] = useState(false);
-  const [levelData, setLevelData] = useState(null);
-
-  // Estados dos alertas
-  const [showAlert, setShowAlert] = useState(false);
-  const [alertMessage, setAlertMessage] = useState('');
-  const [alertType, setAlertType] = useState('success'); // 'success' ou 'error'
-
-  const isAdmin = user?.nivel === 'admin';
-
+  // Carregar usuários quando admin acessa a página
   useEffect(() => {
     if (isAdmin) {
-      buscarUsuarios();
-    } else {
-      setFetching(false);
+      carregarUsuarios();
     }
   }, [isAdmin]);
 
-  async function buscarUsuarios() {
-    setFetching(true);
-    const { data } = await supabase.from('usuarios').select('*').order('nome');
-    setUsers(data || []);
-    setFetching(false);
-  }
-
-  const handleCreateUser = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    // 1. Cria o login no Supabase Auth (Senha padrão = Matrícula)
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password: matricula,
-      options: { 
-        data: { nome, matricula },
-        emailRedirectTo: `${window.location.origin}`
+  const carregarUsuarios = async () => {
+    setLoadingUsuarios(true);
+    try {
+      const token = localStorage.getItem('agromanager_token');
+      const endpoint = `${import.meta.env.VITE_ENDPOINT_USUARIOS}?page=1&page_size=100`;
+      const response = await fetch(endpoint, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUsuarios((data.dados || data.results || []).reverse());
+      } else {
+        throw new Error(`Erro ${response.status} ao carregar usuários`);
       }
+    } catch (error) {
+      console.error('Erro ao carregar usuários:', error);
+      alert.error('Erro ao carregar usuários');
+    } finally {
+      setLoadingUsuarios(false);
+    }
+  };
+
+  const handleCriarUsuario = async () => {
+    if (!novoUsuario.nome || !novoUsuario.email || !novoUsuario.senha) {
+      alert.warning('Preencha todos os campos obrigatórios (nome, email e senha)');
+      return;
+    }
+
+    if (novoUsuario.senha.length < 6) {
+      alert.warning('A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('agromanager_token');
+      const endpoint = `${import.meta.env.VITE_ENDPOINT_USUARIOS}criar/`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(novoUsuario)
+      });
+
+      if (response.ok) {
+        alert.success('Usuário criado com sucesso!');
+        setShowNewUserModal(false);
+        setNovoUsuario({ nome: '', matricula: '', email: '', nivel: 'supervisor', senha: '' });
+        carregarUsuarios();
+      } else {
+        try {
+          const errorData = await response.json();
+          alert.error(errorData.mensagem || 'Erro ao criar usuário');
+        } catch {
+          alert.error(`Erro ao criar usuário (${response.status})`);
+        }
+      }
+    } catch (error) {
+      console.error('Erro:', error);
+      alert.error('Erro ao criar usuário');
+    }
+  };
+
+  const handleAtualizarUsuario = async () => {
+    if (!editarUsuario.nome || !editarUsuario.email) {
+      alert.warning('Preencha todos os campos obrigatórios');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('agromanager_token');
+      const endpoint = `${import.meta.env.VITE_ENDPOINT_USUARIOS}${editingUserId}/`;
+      const response = await fetch(endpoint, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          nome: editarUsuario.nome,
+          email: editarUsuario.email,
+          matricula: editarUsuario.matricula,
+          senha: editarUsuario.senha,
+          nivel: editarUsuario.nivel
+        })
+      });
+
+      if (response.ok) {
+        alert.success('Usuário atualizado com sucesso!');
+        setShowEditUserModal(false);
+        setEditingUserId(null);
+        setEditarUsuario({ nome: '', email: '', matricula: '', senha: '', nivel: 'supervisor' });
+        carregarUsuarios();
+      } else {
+        try {
+          const errorData = await response.json();
+          alert.error(errorData.mensagem || 'Erro ao atualizar usuário');
+        } catch {
+          alert.error(`Erro ao atualizar usuário (${response.status})`);
+        }
+      }
+    } catch (error) {
+      console.error('Erro:', error);
+      alert.error('Erro ao atualizar usuário');
+    }
+  };
+
+  const handleDeletarUsuario = async () => {
+    if (!usuarioDeletando) return;
+
+    try {
+      const token = localStorage.getItem('agromanager_token');
+      const endpoint = `${import.meta.env.VITE_ENDPOINT_USUARIOS}deletar/`;
+      const response = await fetch(endpoint, {
+        method: 'DELETE',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          id: usuarioDeletando.ID
+        })
+      });
+
+      if (response.ok) {
+        alert.success('Usuário deletado com sucesso!');
+        setDeletingId(null);
+        setUsuarioDeletando(null);
+        carregarUsuarios();
+      } else {
+        try {
+          const errorData = await response.json();
+          alert.error(errorData.mensagem || 'Erro ao deletar usuário');
+        } catch {
+          alert.error(`Erro ao deletar usuário (${response.status})`);
+        }
+      }
+    } catch (error) {
+      console.error('Erro:', error);
+      alert.error('Erro ao deletar usuário');
+    }
+  };
+
+  const abrirEditModal = (usuario) => {
+    setEditingUserId(usuario.ID);
+    setEditarUsuario({
+      nome: usuario.NOME || '',
+      email: usuario.EMAIL || '',
+      matricula: usuario.MATRICULA || '',
+      senha: '',
+      nivel: usuario.NIVEL || 'supervisor'
     });
-
-    if (authError) {
-      setAlertMessage("Erro ao criar acesso: " + authError.message);
-      setAlertType('error');
-      setShowAlert(true);
-    } else if (authData.user) {
-      // 2. Cria o perfil na tabela pública vinculando o ID
-      await supabase.from('usuarios').insert([{
-        id: authData.user.id,
-        nome, email, matricula, nivel
-      }]);
-      
-      setAlertMessage("Usuário cadastrado com sucesso!");
-      setAlertType('success');
-      setShowAlert(true);
-      setNome(''); setEmail(''); setMatricula(''); setNivel('comum');
-      buscarUsuarios();
-    }
-    setLoading(false);
-  };
-
-  const handleDeleteUser = async (userId, userName) => {
-    setDeleteData({ userId, userName });
-    setShowDeleteConfirm(true);
-  };
-
-  const confirmDeleteUser = async () => {
-    if (!deleteData) return;
-    setShowDeleteConfirm(false);
-    setLoading(true);
-    
-    const { error } = await supabase.from('usuarios').delete().eq('id', deleteData.userId);
-
-    if (error) {
-      setAlertMessage("Erro ao excluir: " + error.message);
-      setAlertType('error');
-      setShowAlert(true);
-    } else {
-      setAlertMessage("Acesso removido.");
-      setAlertType('success');
-      setShowAlert(true);
-      buscarUsuarios();
-    }
-    setLoading(false);
-  };
-
-  const handleChangeUserLevel = async (userId, novoNivel) => {
-    setLevelData({ userId, novoNivel });
-    setShowLevelConfirm(true);
-  };
-
-  const confirmChangeLevel = async () => {
-    if (!levelData) return;
-    setShowLevelConfirm(false);
-    setLoading(true);
-    const { error } = await supabase
-      .from('usuarios')
-      .update({ nivel: levelData.novoNivel })
-      .eq('id', levelData.userId);
-
-    if (error) {
-      setAlertMessage("Erro: " + error.message);
-      setAlertType('error');
-      setShowAlert(true);
-    } else {
-      setAlertMessage("Nível de acesso alterado com sucesso!");
-      setAlertType('success');
-      setShowAlert(true);
-      buscarUsuarios();
-    }
-    setLoading(false);
+    setShowEditUserModal(true);
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Configurações do Sistema</h2>
-        <p className="text-slate-500 mt-1">Gerencie suas preferências e os acessos da equipe BOLETIM OC.</p>
-      </div>
-
-      {/* SEÇÃO 1: Preferências de Exportação (Visível para TODOS) */}
-      <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-        <div className="flex items-center gap-2 mb-6 text-slate-700">
-          <SettingsIcon size={20} />
-          <h3 className="text-lg font-bold">Preferências de Relatório</h3>
-        </div>
-        <div className="max-w-xs">
-          <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Formato de Exportação Padrão</label>
-          <select 
-            className="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-green-500 transition-all cursor-pointer"
-            defaultValue={localStorage.getItem('agromanager_export_pref') || 'csv'}
-            onChange={(e) => localStorage.setItem('agromanager_export_pref', e.target.value)}
-          >
-            <option value="csv">CSV (Texto separado por vírgula)</option>
-            <option value="xlsx">Excel (.xlsx)</option>
-            <option value="pdf">PDF Executivo</option>
-          </select>
-        </div>
-      </section>
-
-      {/* SEÇÃO 2: Gestão de Usuários (APENAS PARA ADMIN) */}
-      {isAdmin ? (
-        <div className="space-y-8">
-          <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-            <div className="flex items-center gap-2 mb-6 text-green-600">
-              <UserPlus size={22} />
-              <h3 className="text-lg font-bold text-slate-800">Cadastrar Novo Colaborador</h3>
-            </div>
-            
-            <form onSubmit={handleCreateUser} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase mb-1">Nome Completo</label>
-                <input required value={nome} onChange={e => setNome(e.target.value)} className="w-full p-2.5 border border-slate-200 rounded-xl outline-none bg-slate-50" placeholder="Ex: João Silva" />
+    <div className="space-y-4">
+      {isAdmin && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between bg-white p-6 border border-slate-200">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-[#004927] text-white">
+                <Users size={20} />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase mb-1">E-mail Corporativo</label>
-                <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full p-2.5 border border-slate-200 rounded-xl outline-none bg-slate-50" placeholder="email@empresa.com" />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase mb-1">Matrícula (Senha Inicial)</label>
-                <input required value={matricula} onChange={e => setMatricula(e.target.value)} className="w-full p-2.5 border border-slate-200 rounded-xl outline-none bg-slate-50" placeholder="123456" />
-              </div>
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-1">Nível de Acesso</label>
-                  <select value={nivel} onChange={e => setNivel(e.target.value)} className="w-full p-2.5 border border-slate-200 rounded-xl bg-white outline-none">
-                    <option value="comum">Comum</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
-                <button type="submit" disabled={loading} className="bg-green-600 hover:bg-green-700 text-white px-5 rounded-xl font-bold shadow-md transition-all active:scale-95 disabled:opacity-50">
-                  {loading ? <Loader2 className="animate-spin" size={20} /> : 'SALVAR'}
-                </button>
-              </div>
-            </form>
-          </section>
-
-          <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="p-4 border-b bg-slate-50 flex items-center justify-between">
-              <div className="flex items-center gap-2 font-bold text-slate-700">
-                <UsersIcon size={18} /> Equipe Cadastrada
-              </div>
-              <span className="text-[10px] bg-white border border-slate-200 px-2 py-1 rounded-full font-bold text-slate-500">{users.length} USUÁRIOS</span>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b">
-                    <th className="px-6 py-4">Nome</th>
-                    <th className="px-6 py-4">Acesso / Identificação</th>
-                    <th className="px-6 py-4 text-center">Permissão</th>
-                    <th className="px-6 py-4 text-right">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {fetching ? (
-                    <tr><td colSpan="4" className="p-12 text-center"><Loader2 className="animate-spin mx-auto text-slate-300" /></td></tr>
-                  ) : (
-                    users.map(u => (
-                      <tr key={u.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="font-bold text-slate-700 flex items-center gap-2">
-                            {u.nome}
-                            {u.id === user.id && <span className="text-[10px] text-green-500 font-black tracking-tighter">(VOCÊ)</span>}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-sm text-slate-500">{u.email}</p>
-                          <p className="text-[11px] text-slate-400 font-mono">Mat: {u.matricula}</p>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <select 
-                            value={u.nivel} 
-                            disabled={u.id === user.id || loading}
-                            onChange={(e) => handleChangeUserLevel(u.id, e.target.value)}
-                            className={`text-[10px] font-black px-2 py-1 rounded border uppercase outline-none transition-colors ${
-                              u.nivel === 'admin' ? 'bg-red-50 border-red-200 text-red-600' : 'bg-green-50 border-green-200 text-green-600'
-                            } disabled:opacity-50`}
-                          >
-                            <option value="comum">Comum</option>
-                            <option value="admin">Admin</option>
-                          </select>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <button 
-                            onClick={() => handleDeleteUser(u.id, u.nome)}
-                            disabled={u.id === user.id || loading}
-                            className="text-slate-300 hover:text-red-500 p-2 transition-colors disabled:opacity-0"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        </div>
-      ) : (
-        <div className="p-8 bg-primary-50 border border-primary-100 rounded-2xl flex items-center gap-5">
-          <div className="bg-primary-500 p-3 rounded-xl text-white shadow-lg shadow-primary-200">
-            <ShieldAlert size={28} />
-          </div>
-          <div>
-            <h4 className="font-bold text-primary-900 text-lg">Área de Gestão Restrita</h4>
-            <p className="text-sm text-primary-700 leading-relaxed">
-              Você está logado como **{user?.nome}**. Atualmente, somente administradores podem visualizar a listagem da equipe e cadastrar novos colaboradores.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL DE CONFIRMAÇÃO DE DELETE USUÁRIO */}
-      {showDeleteConfirm && (
-        <div 
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm"
-          style={{
-            animation: 'fadeIn 0.3s ease-out'
-          }}
-        >
-          <style>{`
-            @keyframes fadeIn {
-              from { opacity: 0; }
-              to { opacity: 1; }
-            }
-            @keyframes slideUp {
-              from { opacity: 0; transform: translateY(20px) scale(0.95); }
-              to { opacity: 1; transform: translateY(0) scale(1); }
-            }
-          `}</style>
-          <div 
-            className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm mx-4"
-            style={{
-              animation: 'slideUp 0.4s ease-out'
-            }}
-          >
-            <h3 className="text-lg font-bold text-slate-800 mb-2">Remover Acesso</h3>
-            <p className="text-slate-600 mb-6">Tem certeza que deseja remover o acesso de <strong>{deleteData?.userName}</strong>? Esta ação não pode ser desfeita.</p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300 transition-all font-bold"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={confirmDeleteUser}
-                disabled={loading}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all font-bold disabled:opacity-50"
-              >
-                {loading ? 'Removendo...' : 'Remover'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL DE CONFIRMAÇÃO DE ALTERAR NÍVEL */}
-      {showLevelConfirm && (
-        <div 
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm"
-          style={{
-            animation: 'fadeIn 0.3s ease-out'
-          }}
-        >
-          <style>{`
-            @keyframes fadeIn {
-              from { opacity: 0; }
-              to { opacity: 1; }
-            }
-            @keyframes slideUp {
-              from { opacity: 0; transform: translateY(20px) scale(0.95); }
-              to { opacity: 1; transform: translateY(0) scale(1); }
-            }
-          `}</style>
-          <div 
-            className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm mx-4"
-            style={{
-              animation: 'slideUp 0.4s ease-out'
-            }}
-          >
-            <h3 className="text-lg font-bold text-slate-800 mb-2">Alterar Permissão</h3>
-            <p className="text-slate-600 mb-6">Tem certeza que deseja alterar o nível de acesso para <strong>{levelData?.novoNivel?.toUpperCase()}</strong>?</p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowLevelConfirm(false)}
-                className="flex-1 px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300 transition-all font-bold"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={confirmChangeLevel}
-                disabled={loading}
-                className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all font-bold disabled:opacity-50"
-              >
-                {loading ? 'Alterando...' : 'Alterar'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal de Alerta com Animação */}
-      {showAlert && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 50,
-          backdropFilter: 'blur(4px)',
-          animation: 'fadeIn 0.3s ease-out'
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            maxWidth: '400px',
-            width: '90%',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-            animation: 'slideUp 0.4s ease-out'
-          }}>
-            <div className="flex items-start gap-3">
-              {alertType === 'success' ? (
-                <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                  <CheckCircle className="text-green-600" size={20} />
-                </div>
-              ) : (
-                <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                  <AlertCircle className="text-red-600" size={20} />
-                </div>
-              )}
-              <div className="flex-1">
-                <p className="text-slate-700 font-medium">{alertMessage}</p>
+                <h2 className="text-lg font-bold text-slate-800">Gerenciar Usuários</h2>
+                <p className="text-xs text-slate-500 mt-0.5">Criar, editar e deletar usuários do sistema</p>
               </div>
             </div>
             <button
-              onClick={() => setShowAlert(false)}
-              className="w-full mt-6 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition-all"
+              onClick={() => setShowNewUserModal(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-[#004927] text-white hover:bg-[#003220] font-bold text-sm transition-all shadow-sm hover:shadow-md"
             >
-              Fechar
+              <Plus size={18} /> Novo Usuário
             </button>
+          </div>
+
+          {loadingUsuarios ? (
+            <div className="bg-white border border-slate-200 py-12 text-center">
+              <p className="text-slate-600 font-medium">Carregando usuários...</p>
+            </div>
+          ) : usuarios.length === 0 ? (
+            <div className="bg-white border border-slate-200 py-12 text-center">
+              <p className="text-slate-600 font-medium">Nenhum usuário cadastrado</p>
+            </div>
+          ) : (
+            <div className="bg-white border border-slate-200 overflow-hidden shadow-sm">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-100 border-b border-slate-200">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-bold text-slate-700">Nome</th>
+                    <th className="px-4 py-3 text-left font-bold text-slate-700">Email</th>
+                    <th className="px-4 py-3 text-left font-bold text-slate-700">Matrícula</th>
+                    <th className="px-4 py-3 text-left font-bold text-slate-700">Nível</th>
+                    <th className="px-4 py-3 text-center font-bold text-slate-700 w-20">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {usuarios.map((usr, idx) => (
+                    <tr key={usr.ID} className={`border-b border-slate-200 hover:bg-slate-50 transition-colors ${idx % 2 === 0 ? 'bg-slate-50' : 'bg-white'}`}>
+                      <td className="px-4 py-3 font-medium text-slate-800">{usr.NOME}</td>
+                      <td className="px-4 py-3 text-slate-600 text-xs">{usr.EMAIL}</td>
+                      <td className="px-4 py-3 text-slate-600 text-xs">{usr.MATRICULA || '-'}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-block px-2.5 py-1 text-xs font-bold ${
+                          usr.NIVEL === 'admin' ? 'bg-red-100 text-red-700' :
+                          usr.NIVEL === 'gerente' ? 'bg-blue-100 text-blue-700' :
+                          'bg-green-100 text-green-700'
+                        }`}>
+                          {usr.NIVEL.toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => abrirEditModal(usr)}
+                          className="p-1.5 text-blue-600 hover:bg-blue-50 transition-colors"
+                          title="Editar usuário"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setDeletingId(usr.ID);
+                            setUsuarioDeletando(usr);
+                          }}
+                          className="p-1.5 text-red-600 hover:bg-red-50 transition-colors"
+                          title="Deletar usuário"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* MODAL: NOVO USUÁRIO */}
+      {showNewUserModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white max-w-sm w-full space-y-0 border border-slate-200 shadow-xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-linear-to-r from-slate-50 to-slate-100">
+              <h3 className="text-base font-bold text-slate-800">Novo Usuário</h3>
+              <button 
+                onClick={() => setShowNewUserModal(false)} 
+                className="text-slate-400 hover:text-slate-600 hover:bg-slate-200 p-1 transition-all"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="px-6 py-5 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Nome *</label>
+                <input
+                  type="text"
+                  value={novoUsuario.nome}
+                  onChange={(e) => setNovoUsuario({...novoUsuario, nome: e.target.value})}
+                  className="settings-input w-full px-3.5 py-2.5 border border-slate-300 text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:border-[#004927] focus:ring-2 focus:ring-[#004927]/10 transition-all rounded-sm"
+                  placeholder="Nome completo"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Email *</label>
+                <input
+                  type="email"
+                  value={novoUsuario.email}
+                  onChange={(e) => setNovoUsuario({...novoUsuario, email: e.target.value})}
+                  className="settings-input w-full px-3.5 py-2.5 border border-slate-300 text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:border-[#004927] focus:ring-2 focus:ring-[#004927]/10 transition-all rounded-sm"
+                  placeholder="usuario@empresa.com"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Matrícula</label>
+                <input
+                  type="text"
+                  value={novoUsuario.matricula}
+                  onChange={(e) => setNovoUsuario({...novoUsuario, matricula: e.target.value})}
+                  className="settings-input w-full px-3.5 py-2.5 border border-slate-300 text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:border-[#004927] focus:ring-2 focus:ring-[#004927]/10 transition-all rounded-sm"
+                  placeholder="Número da matrícula"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Senha *</label>
+                <input
+                  type="password"
+                  value={novoUsuario.senha}
+                  onChange={(e) => setNovoUsuario({...novoUsuario, senha: e.target.value})}
+                  className="settings-input w-full px-3.5 py-2.5 border border-slate-300 text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:border-[#004927] focus:ring-2 focus:ring-[#004927]/10 transition-all rounded-sm"
+                  placeholder="Mínimo 6 caracteres"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Nível *</label>
+                <select
+                  value={novoUsuario.nivel}
+                  onChange={(e) => setNovoUsuario({...novoUsuario, nivel: e.target.value})}
+                  className="settings-input w-full px-3.5 py-2.5 border border-slate-300 text-sm text-slate-900 outline-none focus:border-[#004927] focus:ring-2 focus:ring-[#004927]/10 transition-all rounded-sm"
+                >
+                  <option value="supervisor">Supervisor</option>
+                  <option value="gerente">Gerente</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-2 px-6 py-3.5 border-t border-slate-200 bg-slate-50">
+              <button
+                onClick={() => setShowNewUserModal(false)}
+                className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-100 font-medium text-sm transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleCriarUsuario}
+                className="flex-1 px-4 py-2 bg-[#004927] text-white hover:bg-[#003220] font-medium text-sm transition-all shadow-sm hover:shadow-md"
+              >
+                Criar
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      <style>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-        @keyframes slideUp {
-          from {
-            transform: translateY(20px);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
-      `}</style>
+      {/* MODAL: EDITAR USUÁRIO */}
+      {showEditUserModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white max-w-sm w-full space-y-0 border border-slate-200 shadow-xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-linear-to-r from-slate-50 to-slate-100">
+              <h3 className="text-base font-bold text-slate-800">Editar Usuário</h3>
+              <button 
+                onClick={() => setShowEditUserModal(false)} 
+                className="text-slate-400 hover:text-slate-600 hover:bg-slate-200 p-1 transition-all"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="px-6 py-5 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Nome *</label>
+                <input
+                  type="text"
+                  value={editarUsuario.nome}
+                  onChange={(e) => setEditarUsuario({...editarUsuario, nome: e.target.value})}
+                  className="settings-input w-full px-3.5 py-2.5 border border-slate-300 text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:border-[#004927] focus:ring-2 focus:ring-[#004927]/10 transition-all rounded-sm"
+                  placeholder="Nome completo"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Email *</label>
+                <input
+                  type="email"
+                  value={editarUsuario.email}
+                  onChange={(e) => setEditarUsuario({...editarUsuario, email: e.target.value})}
+                  className="settings-input w-full px-3.5 py-2.5 border border-slate-300 text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:border-[#004927] focus:ring-2 focus:ring-[#004927]/10 transition-all rounded-sm"
+                  placeholder="usuario@empresa.com"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Matrícula</label>
+                <input
+                  type="text"
+                  value={editarUsuario.matricula}
+                  onChange={(e) => setEditarUsuario({...editarUsuario, matricula: e.target.value})}
+                  className="settings-input w-full px-3.5 py-2.5 border border-slate-300 text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:border-[#004927] focus:ring-2 focus:ring-[#004927]/10 transition-all rounded-sm"
+                  placeholder="Número da matrícula"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Senha (deixe em branco para manter)</label>
+                <input
+                  type="password"
+                  value={editarUsuario.senha}
+                  onChange={(e) => setEditarUsuario({...editarUsuario, senha: e.target.value})}
+                  className="settings-input w-full px-3.5 py-2.5 border border-slate-300 text-sm text-slate-900 placeholder:text-slate-500 outline-none focus:border-[#004927] focus:ring-2 focus:ring-[#004927]/10 transition-all rounded-sm"
+                  placeholder="Nova senha (opcional)"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Nível</label>
+                <select
+                  value={editarUsuario.nivel}
+                  onChange={(e) => setEditarUsuario({...editarUsuario, nivel: e.target.value})}
+                  className="settings-input w-full px-3.5 py-2.5 border border-slate-300 text-sm text-slate-900 outline-none focus:border-[#004927] focus:ring-2 focus:ring-[#004927]/10 transition-all rounded-sm"
+                >
+                  <option value="supervisor">Supervisor</option>
+                  <option value="gerente">Gerente</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-2 px-6 py-3.5 border-t border-slate-200 bg-slate-50">
+              <button
+                onClick={() => setShowEditUserModal(false)}
+                className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-100 font-medium text-sm transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleAtualizarUsuario}
+                className="flex-1 px-4 py-2 bg-[#004927] text-white hover:bg-[#003220] font-medium text-sm transition-all shadow-sm hover:shadow-md"
+              >
+                Atualizar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: CONFIRMAR EXCLUSÃO */}
+      {deletingId && usuarioDeletando && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white max-w-sm w-full space-y-0 border border-slate-200 shadow-xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-200 bg-linear-to-r from-red-50 to-orange-50">
+              <div className="flex items-center justify-center w-8 h-8 bg-red-100 text-red-600">
+                <AlertCircle size={18} />
+              </div>
+              <h3 className="text-base font-bold text-slate-800">Deletar Usuário?</h3>
+            </div>
+            
+            <div className="px-6 py-5">
+              <p className="text-sm text-slate-600 leading-relaxed">Tem certeza que deseja deletar este usuário? Esta ação <span className="font-bold text-red-600">não pode ser desfeita.</span></p>
+            </div>
+
+            <div className="flex gap-2 px-6 py-3.5 border-t border-slate-200 bg-slate-50">
+              <button
+                onClick={() => {
+                  setDeletingId(null);
+                  setUsuarioDeletando(null);
+                }}
+                className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-100 font-medium text-sm transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeletarUsuario}
+                className="flex-1 px-4 py-2 bg-red-600 text-white hover:bg-red-700 font-medium text-sm transition-all shadow-sm hover:shadow-md"
+              >
+                Deletar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!isAdmin && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 bg-white p-6 border border-slate-200">
+            <div className="p-2.5 bg-blue-100 text-blue-600">
+              <Users size={20} />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-800">Meu Perfil</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Informações da sua conta</p>
+            </div>
+          </div>
+          <div className="bg-white border border-slate-200 overflow-hidden">
+            <div className="grid grid-cols-2 gap-0">
+              <div className="px-6 py-4 border-r border-b border-slate-200 bg-slate-50">
+                <p className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Nome</p>
+                <p className="text-slate-800 font-medium">{user?.nome || '-'}</p>
+              </div>
+              <div className="px-6 py-4 border-b border-slate-200">
+                <p className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Email</p>
+                <p className="text-slate-800 font-medium">{user?.email || '-'}</p>
+              </div>
+              <div className="px-6 py-4 border-r border-slate-200 bg-slate-50">
+                <p className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Matrícula</p>
+                <p className="text-slate-800 font-medium">{user?.matricula || '-'}</p>
+              </div>
+              <div className="px-6 py-4">
+                <p className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Cargo</p>
+                <span className="inline-block px-2.5 py-1 text-xs font-bold bg-blue-100 text-blue-700">
+                  {getRoleLabel(user?.cargo)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

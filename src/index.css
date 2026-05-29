@@ -1,1 +1,50 @@
 @import "tailwindcss";
+
+/* Corrigir cor do texto em selects e inputs */
+input::placeholder {
+  color: #cbd5e1;
+}
+
+select option {
+  color: white;
+  background-color: #334155;
+}
+
+select option:checked {
+  background-color: #004927;
+  color: white;
+}
+
+input[type="text"],
+input:not(.login-input)[type="email"],
+input:not(.login-input)[type="password"],
+input[type="date"],
+input[type="datetime-local"],
+textarea,
+select {
+  color: #e2e8f0 !important;
+}
+
+/* Login form inputs - texto preto */
+input.login-input[type="email"],
+input.login-input[type="password"] {
+  color: #1e293b !important;
+  caret-color: #1e293b !important;
+}
+
+/* Dashboard inputs - texto preto */
+input.dashboard-input[type="text"],
+input.dashboard-input[type="email"],
+input.dashboard-input[type="password"] {
+  color: #1e293b !important;
+  caret-color: #1e293b !important;
+}
+
+/* Settings form inputs - texto preto */
+input.settings-input[type="text"],
+input.settings-input[type="email"],
+input.settings-input[type="password"],
+select.settings-input {
+  color: #1e293b !important;
+  caret-color: #1e293b !important;
+}

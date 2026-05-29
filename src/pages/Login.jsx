@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import { Lock, Mail, Loader2, HelpCircle, AlertCircle } from 'lucide-react';
+import { Lock, Mail, Loader2, FileText, Download } from 'lucide-react';
+import { apiLogin, handleApiError } from '../lib/apiService';
+import { isValidEmail } from '../lib/validators';
+import { useAlert } from '../context/AlertContext';
 import logo from '../assets/logo_login_form.png';
 
 export function Login({ onLoginSuccess }) {
@@ -8,11 +10,7 @@ export function Login({ onLoginSuccess }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
-
-  // Estados de Alerta
-  const [showAlert, setShowAlert] = useState(false);
-  const [alertMessage, setAlertMessage] = useState('');
-  const [alertType, setAlertType] = useState('error'); // 'error' ou 'info'
+  const alert = useAlert();
 
   // Carrega email salvo se o "Lembrar" estiver ativo
   useEffect(() => {
@@ -23,70 +21,98 @@ export function Login({ onLoginSuccess }) {
     }
   }, []);
 
+  // Login com validação do endpoint
   const handleLogin = async (e) => {
     e.preventDefault();
+    
+    // Validação básica
+    if (!isValidEmail(email)) {
+      alert.error('Email inválido. Verifique o formato.');
+      return;
+    }
+
+    if (!password || password.trim().length === 0) {
+      alert.error('Senha é obrigatória.');
+      return;
+    }
+
     setLoading(true);
 
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const userData = await apiLogin(email, password);
 
-    if (authError) {
-      setAlertMessage("Acesso Negado: Verifique e-mail e senha.");
-      setAlertType('error');
-      setShowAlert(true);
+      // Validação de role
+      const validRoles = ['comum', 'supervisor', 'gerente', 'admin'];
+      const userRole = (userData.cargo || userData.nivel || '').toLowerCase().trim();
+      
+      if (!userRole || !validRoles.includes(userRole)) {
+        throw new Error('Sua conta não possui acesso ao sistema.');
+      }
+
+      // Prepara dados da sessão
+      const sessionData = {
+        id: userData.id,
+        nome: userData.nome,
+        cargo: userRole,
+        email: userData.email,
+        matricula: userData.matricula
+      };
+
+      if (rememberMe) {
+        localStorage.setItem('agromanager_remember_email', email);
+      } else {
+        localStorage.removeItem('agromanager_remember_email');
+      }
+
+      localStorage.setItem('agromanager_user', JSON.stringify(sessionData));
+      alert.success('Login realizado com sucesso!');
       setLoading(false);
-      return;
-    }
-
-    const { data: userData, error: userError } = await supabase
-      .from('usuarios')
-      .select('nome, nivel, matricula')
-      .eq('id', authData.user.id)
-      .single();
-
-    if (userError) {
-      setAlertMessage("Erro ao carregar perfil de acesso.");
-      setAlertType('error');
-      setShowAlert(true);
+      onLoginSuccess(sessionData);
+    } catch (error) {
+      console.error('[LOGIN] Erro:', error);
+      const errorMsg = handleApiError(error);
+      alert.error(errorMsg);
       setLoading(false);
-      return;
     }
+  };
 
-    if (rememberMe) {
-      localStorage.setItem('agromanager_remember_email', email);
-    } else {
-      localStorage.removeItem('agromanager_remember_email');
-    }
-
-    const sessionData = { ...authData.user, ...userData };
-    localStorage.setItem('agromanager_user', JSON.stringify(sessionData));
-    onLoginSuccess(sessionData);
-    setLoading(false);
+  const handleQuickAccessApontamentos = () => {
+    // Cria um usuário visitante/sem credenciais para acesso rápido a apontamentos
+    const visitorUser = {
+      id: 'visitor',
+      nome: 'Visitante',
+      email: 'visitante@apontamentos.com',
+      cargo: 'visitante',
+      nivel: 'visitante',
+      matricula: '',
+      isVisitor: true // Flag para identificar que é acesso sem autenticação
+    };
+    
+    localStorage.setItem('agromanager_user', JSON.stringify(visitorUser));
+    onLoginSuccess(visitorUser);
   };
 
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-700">
+      <div className="max-w-md w-full bg-white overflow-hidden border border-slate-700">
         
-        <div className="bg-green-600 p-8 text-center text-white">
-          <div className="inline-flex p-3 bg-green-500 rounded-xl mb-4 shadow-inner">
+        <div className="bg-[#004927] p-8 text-center text-white">
+          <div className="inline-flex p-3 bg-[#006838] mb-4">
             <img src={logo} alt="BOLETIM OC" className="w-10 h-10 object-contain" />
           </div>
           <h1 className="text-2xl font-bold italic tracking-tighter uppercase">BOLETIM OC</h1>
-          <p className="text-green-100 text-xs mt-1 font-medium">SISTEMA DE GESTÃO DE OCORRÊNCIAS v1.0</p>
+          <p className="text-[#c8e6c9] text-xs mt-1 font-medium">SISTEMA DE GESTÃO DE OCORRÊNCIAS v1.0</p>
         </div>
 
         <form onSubmit={handleLogin} className="p-8 space-y-5">
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase mb-1">E-mail Corporativo</label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
               <input 
                 type="email" required value={email} onChange={e => setEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-green-500 bg-slate-50"
-                placeholder="exemplo@agroterenas.com.br"
+                className="login-input w-full pl-10 pr-4 py-2 border border-slate-300 outline-none focus:ring-2 focus:ring-green-500 bg-slate-50 text-slate-900 placeholder-slate-600"
+                placeholder="exemplo.exemplo@agt.com.br"
               />
             </div>
           </div>
@@ -94,117 +120,57 @@ export function Login({ onLoginSuccess }) {
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Senha de Acesso</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
               <input 
                 type="password" required value={password} onChange={e => setPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-green-500 bg-slate-50"
-                placeholder="••••••••"
+                className="login-input w-full pl-10 pr-4 py-2 border border-slate-300 outline-none focus:ring-2 focus:ring-green-500 bg-slate-50 text-slate-900 placeholder-slate-600"
+                placeholder="Digite sua senha"
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <label className="flex items-center gap-2 cursor-pointer group">
               <input 
                 type="checkbox" 
                 checked={rememberMe}
                 onChange={e => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 text-green-600 focus:ring-green-500"
+                className="w-4 h-4 border-slate-300 text-[#004927] focus:ring-[#004927]"
               />
-              <span className="text-sm text-slate-600 group-hover:text-green-600 transition-colors">Lembrar meu usuário</span>
+              <span className="text-sm text-slate-600 group-hover:text-[#004927] transition-colors">Lembrar meu usuário</span>
             </label>
 
-            <button 
-              type="button"
-              onClick={() => {
-                setAlertMessage("DICA: Sua senha padrão é o número da sua MATRÍCULA.");
-                setAlertType('info');
-                setShowAlert(true);
-              }}
-              className="text-sm text-green-600 font-medium hover:underline flex items-center gap-1"
-            >
-              <HelpCircle size={14} /> Esqueci a senha
-            </button>
+            <div className="flex gap-2">
+              <a 
+                href="/app.apk" 
+                download="apontamentos-app.apk"
+                className="text-sm text-green-600 font-medium hover:text-green-700 hover:underline flex items-center gap-1"
+                title="Baixar o aplicativo móvel para Android"
+              >
+                <Download size={14} /> APK
+              </a>
+
+              <button 
+                type="button"
+                onClick={handleQuickAccessApontamentos}
+                className="text-sm text-blue-600 font-medium hover:text-blue-700 hover:underline flex items-center gap-1"
+              >
+                <FileText size={14} /> Apontamento
+              </button>
+            </div>
           </div>
 
           <button 
             type="submit" disabled={loading}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 disabled:opacity-50"
+            className="w-full bg-[#004927] hover:bg-[#003220] text-white font-bold py-3 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
           >
             {loading ? <Loader2 className="animate-spin" /> : "ACESSAR DASHBOARD"}
           </button>
         </form>
 
         <div className="p-4 bg-slate-50 border-t text-center">
-          <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Uso restrito a colaboradores autorizados</p>
+          <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Uso restrito a colaboradores AGT</p>
         </div>
-
-        {/* Modal de Alerta com Animação */}
-        {showAlert && (
-          <div style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 50,
-            backdropFilter: 'blur(4px)',
-            animation: 'fadeIn 0.3s ease-out'
-          }}>
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: '24px',
-              maxWidth: '400px',
-              width: '90%',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-              animation: 'slideUp 0.4s ease-out'
-            }}>
-              <div className="flex items-start gap-3">
-                {alertType === 'error' ? (
-                  <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                    <AlertCircle className="text-red-600" size={20} />
-                  </div>
-                ) : (
-                  <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <HelpCircle className="text-green-600" size={20} />
-                  </div>
-                )}
-                <div className="flex-1">
-                  <p className="text-slate-700 font-medium">{alertMessage}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowAlert(false)}
-                className="w-full mt-6 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition-all"
-              >
-                Fechar
-              </button>
-            </div>
-          </div>
-        )}
-
-        <style>{`
-          @keyframes fadeIn {
-            from {
-              opacity: 0;
-            }
-            to {
-              opacity: 1;
-            }
-          }
-          @keyframes slideUp {
-            from {
-              transform: translateY(20px);
-              opacity: 0;
-            }
-            to {
-              transform: translateY(0);
-              opacity: 1;
-            }
-          }
-        `}</style>
       </div>
     </div>
   );
