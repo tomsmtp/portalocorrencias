@@ -1,0 +1,15 @@
+﻿# APK files
+*.apk
+
+# Build outputs
+dist/
+node_modules/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
