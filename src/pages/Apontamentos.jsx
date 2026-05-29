@@ -544,10 +544,10 @@ export function Apontamentos({ user }) {
             <a 
               href="/downloads/apontamentos-app.apk" 
               download="apontamentos-app.apk"
-              className="flex items-center gap-1.5 px-4 py-2 font-bold text-sm transition-all bg-green-600 text-white border border-green-600 hover:bg-green-700"
+              className="flex items-center gap-1.5 px-4 py-2 font-bold text-sm transition-all bg-green-600 text-white border border-green-600 hover:bg-green-700 rounded shadow-md"
               title="Baixar aplicativo móvel para Android"
             >
-              <Download size={16} /> APK
+              <Download size={16} /> Baixar APK
             </a>
             {canCreate && !userAdmin && (
               <button onClick={handleNew} className="bg-[#004927] hover:bg-[#003220] text-white px-4 py-2 font-bold text-sm transition-all flex items-center gap-1.5">
