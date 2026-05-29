@@ -1,5 +1,6 @@
-﻿# APK files
+﻿# APK files (but allow in public/downloads)
 *.apk
+!/public/downloads/*.apk
 
 # Build outputs
 node_modules/
