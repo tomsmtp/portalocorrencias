@@ -4,8 +4,7 @@
 # Build outputs
 node_modules/
 
-# Environment
-.env
+# Environment (only local, not .env in root)
 .env.local
 
 # IDE
