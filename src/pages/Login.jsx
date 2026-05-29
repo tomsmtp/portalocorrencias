@@ -97,8 +97,8 @@ export function Login({ onLoginSuccess }) {
       <div className="max-w-md w-full bg-white overflow-hidden border border-slate-700">
         
         <div className="bg-[#004927] p-8 text-center text-white">
-          <div className="inline-flex p-3 bg-[#006838] mb-4">
-            <img src={logo} alt="BOLETIM OC" className="w-10 h-10 object-contain" />
+          <div className="inline-flex p-4 bg-[#006838] mb-4 rounded">
+            <img src={logo} alt="BOLETIM OC" className="w-20 h-20 object-contain" />
           </div>
           <h1 className="text-2xl font-bold italic tracking-tighter uppercase">BOLETIM OC</h1>
           <p className="text-[#c8e6c9] text-xs mt-1 font-medium">SISTEMA DE GESTÃO DE OCORRÊNCIAS v1.0</p>
