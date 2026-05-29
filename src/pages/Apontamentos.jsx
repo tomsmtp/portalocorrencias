@@ -508,7 +508,7 @@ export function Apontamentos({ user }) {
       {userVisitor ? (
         <div className="flex flex-col items-center justify-center min-h-96 space-y-8">
           <div className="text-center space-y-3">
-            <h2 className="text-3xl font-bold text-slate-800">Criar Novo Apontamento</h2>
+            <h2 className="text-3xl font-bold text-slate-800">CRIE UM NOVO APONTAMENTO OU BAIXE NOSSO APK</h2>
             <p className="text-slate-500 text-base">Clique no botão abaixo para registrar um novo apontamento</p>
           </div>
           
