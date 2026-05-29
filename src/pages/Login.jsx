@@ -140,22 +140,22 @@ export function Login({ onLoginSuccess }) {
               <span className="text-sm text-slate-600 group-hover:text-[#004927] transition-colors">Lembrar meu usuário</span>
             </label>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 pt-2">
               <a 
                 href="/downloads/apontamentos-app.apk" 
                 download="apontamentos-app.apk"
-                className="text-sm text-green-600 font-medium hover:text-green-700 hover:underline flex items-center gap-1"
+                className="flex-1 px-4 py-2 bg-green-600 text-white font-medium rounded hover:bg-green-700 transition-colors flex items-center justify-center gap-2 text-sm"
                 title="Baixar o aplicativo móvel para Android"
               >
-                <Download size={14} /> APK
+                <Download size={16} /> APK
               </a>
 
               <button 
                 type="button"
                 onClick={handleQuickAccessApontamentos}
-                className="text-sm text-blue-600 font-medium hover:text-blue-700 hover:underline flex items-center gap-1"
+                className="flex-1 px-4 py-2 bg-blue-600 text-white font-medium rounded hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 text-sm"
               >
-                <FileText size={14} /> Apontamento
+                <FileText size={16} /> Apontamento
               </button>
             </div>
           </div>
