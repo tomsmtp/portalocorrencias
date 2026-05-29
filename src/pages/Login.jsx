@@ -141,12 +141,7 @@ export function Login({ onLoginSuccess }) {
             </label>
 
             <div className="flex gap-2 pt-2">
-              <a 
-                href="https://pub-482430420b844c5db71ab1b6b6748536.r2.dev/aplicativo%20boletin%20de%20ocorrencias%20(facilities)/apontamentos-app.apk" 
-                download="apontamentos-app.apk"
-                className="flex-1 px-4 py-2 bg-green-600 text-white font-medium rounded hover:bg-green-700 transition-colors flex items-center justify-center gap-2 text-sm"
-                title="Baixar o aplicativo móvel para Android"
-              >
+              <a href="https://pub-482430420b844c5db71ab1b6b6748536.r2.dev/aplicativo%20boletin%20de%20ocorrencias%20(facilities)/apontamentos-app.apk" download="apontamentos-app.apk" className="flex-1 px-4 py-2 bg-green-600 text-white font-medium rounded hover:bg-green-700 transition-colors flex items-center justify-center gap-2 text-sm" title="Baixar o aplicativo móvel para Android">
                 <Download size={16} /> APK
               </a>
 
