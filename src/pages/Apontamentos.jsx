@@ -512,12 +512,23 @@ export function Apontamentos({ user }) {
             <p className="text-slate-500 text-base">Clique no botão abaixo para registrar um novo apontamento</p>
           </div>
           
-          <button 
-            onClick={handleNew}
-            className="bg-[#004927] hover:bg-[#003220] text-white px-8 py-4 font-bold text-lg transition-all flex items-center gap-3 shadow-lg hover:shadow-xl"
-          >
-            <Plus size={24} /> Novo Apontamento
-          </button>
+          <div className="flex gap-4">
+            <button 
+              onClick={handleNew}
+              className="bg-[#004927] hover:bg-[#003220] text-white px-8 py-4 font-bold text-lg transition-all flex items-center gap-3 shadow-lg hover:shadow-xl"
+            >
+              <Plus size={24} /> Novo Apontamento
+            </button>
+            
+            <a 
+              href="/downloads/apontamentos-app.apk" 
+              download="apontamentos-app.apk"
+              className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 font-bold text-lg transition-all flex items-center gap-3 shadow-lg hover:shadow-xl rounded"
+              title="Baixar aplicativo móvel para Android"
+            >
+              <Download size={24} /> Baixar APK
+            </a>
+          </div>
         </div>
       ) : (
         <>
