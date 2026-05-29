@@ -541,6 +541,14 @@ export function Apontamentos({ user }) {
             >
               <Download size={16} className={userAdmin || user?.isVisitor ? "text-slate-300" : "text-[#004927]"} /> Exportar
             </button>
+            <a 
+              href="/downloads/apontamentos-app.apk" 
+              download="apontamentos-app.apk"
+              className="flex items-center gap-1.5 px-4 py-2 font-bold text-sm transition-all bg-green-600 text-white border border-green-600 hover:bg-green-700"
+              title="Baixar aplicativo móvel para Android"
+            >
+              <Download size={16} /> APK
+            </a>
             {canCreate && !userAdmin && (
               <button onClick={handleNew} className="bg-[#004927] hover:bg-[#003220] text-white px-4 py-2 font-bold text-sm transition-all flex items-center gap-1.5">
                 <Plus size={16} /> Novo
