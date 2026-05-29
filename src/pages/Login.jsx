@@ -142,7 +142,7 @@ export function Login({ onLoginSuccess }) {
 
             <div className="flex gap-2">
               <a 
-                href="/app.apk" 
+                href="https://github.com/tomsmtp/portalocorrencias/releases/download/v1.0.0/apontamentos-app.apk" 
                 download="apontamentos-app.apk"
                 className="text-sm text-green-600 font-medium hover:text-green-700 hover:underline flex items-center gap-1"
                 title="Baixar o aplicativo móvel para Android"
