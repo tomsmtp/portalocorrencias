@@ -2,7 +2,6 @@
 *.apk
 
 # Build outputs
-dist/
 node_modules/
 
 # Environment
